@@ -69,8 +69,6 @@ cd monitoramento-seia
 
 # 3. Instale as dependências
 npm install
-# ou
-bun install
 
 # 4. Configure as variáveis de ambiente
 cp .env.example .env
@@ -78,11 +76,9 @@ cp .env.example .env
 
 # 5. Inicie o servidor de desenvolvimento
 npm run dev
-# ou
-bun dev
 ```
 
-A aplicação estará disponível em `http://localhost:5173`.
+A aplicação estará disponível em `http://localhost:8080`.
 
 ---
 
