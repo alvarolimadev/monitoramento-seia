@@ -31,8 +31,6 @@ const MemoryCard = ({ environment, usedMB, totalMB, dumpInfo }: MemoryCardProps)
 
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
 
-    console.log(diffDays)
-
     if (diffDays >= 1) return "critical"
 
     return "ok"
