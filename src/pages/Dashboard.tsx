@@ -143,8 +143,6 @@ const Dashboard = () => {
 
       const json = await response.json();
 
-      console.log(json);
-
       const dadosConvertidos = converterDump(json);
 
       setDbDump(dadosConvertidos);
@@ -155,8 +153,6 @@ const Dashboard = () => {
       setLoadingDb(false);
     }
   }
-
-  console.log(dbDump);
 
   // carrega dados ao abrir a tela
   useEffect(() => {
