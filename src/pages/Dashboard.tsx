@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { LogOut, Monitor, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MemoryCard from "@/components/MemoryCard";
+import { getMonitoramentoJboss, getMonitoramentoBanco } from "@/services/dashboard.service";
 
 interface EnvData {
   environment: string;
@@ -99,31 +100,22 @@ const Dashboard = () => {
       };
 
     });
-
   }
 
   async function fetchMonitoramento() {
     try {
       setLoadingEnv(true);
 
-      const response = await fetch(
-        "http://localhost:9000/monitoramentos/monitoramento-memoria-jboss"
-      );
+      const response = await getMonitoramentoJboss();
 
-      if (!response.ok) {
-        throw new Error("Erro ao buscar dados da API");
-      }
-
-      const json = await response.json();
-
-      const dadosConvertidos = converterDados(json.resultado);
+      const dadosConvertidos = converterDados(response.resultado);
 
       setData(dadosConvertidos);
 
       setLastUpdate(new Date());
 
     } catch (error) {
-      console.error("Erro na requisição:", error);
+      console.error("Erro ao buscar monitoramento do JBoss:", error);
     } finally {
       setLoadingEnv(false);
     }
@@ -133,17 +125,9 @@ const Dashboard = () => {
     try {
       setLoadingDb(true);
 
-      const response = await fetch(
-        "http://localhost:9000/monitoramentos/monitoramento-atualizacao-banco"
-      );
+      const response = await getMonitoramentoBanco();
 
-      if (!response.ok) {
-        throw new Error("Erro ao buscar atualização do banco");
-      }
-
-      const json = await response.json();
-
-      const dadosConvertidos = converterDump(json);
+      const dadosConvertidos = converterDump(response);
 
       setDbDump(dadosConvertidos);
 
@@ -156,28 +140,16 @@ const Dashboard = () => {
 
   // carrega dados ao abrir a tela
   useEffect(() => {
-    async function carregarDashboard() {
-      setLoadingEnv(true);
-      setLoadingDb(true);
-
-      await Promise.all([
-        fetchMonitoramento(),
-        fetchMonitoramentoBanco()
-      ]);
-
-      setLoadingEnv(false);
-      setLoadingDb(false);
-    }
-
-    carregarDashboard();
+    fetchMonitoramento();
+    fetchMonitoramentoBanco();
   }, []);
 
   const handleRefresh = (params) => {
-    params === "memory" ? fetchMonitoramento() : fetchMonitoramentoBanco();
     // setData(initialData.map((env) => ({
-    //   ...env,
-    //   usedMB: Math.round(Math.random() * env.totalMB * 0.5 + env.totalMB * 0.2),
-    // })));
+      //   ...env,
+      //   usedMB: Math.round(Math.random() * env.totalMB * 0.5 + env.totalMB * 0.2),
+      // })));
+    fetchMonitoramento();
     setLastUpdate(new Date());
   };
 
@@ -217,7 +189,7 @@ const Dashboard = () => {
               Última atualização: {lastUpdate.toLocaleTimeString("pt-BR")}
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => handleRefresh("memory")}>
+          <Button variant="outline" size="sm" onClick={handleRefresh}>
             <RefreshCw className="mr-2 h-3.5 w-3.5" />
             Atualizar
           </Button>
@@ -260,13 +232,9 @@ const Dashboard = () => {
           <div>
             <h1 className="text-lg font-semibold text-foreground">Monitoramento do Banco de Dados</h1>
           </div>
-          <Button variant="outline" size="sm" onClick={() => handleRefresh("database")}>
-            <RefreshCw className="mr-2 h-3.5 w-3.5" />
-            Atualizar
-          </Button>
         </div>
 
-                {/* Legend */}
+        {/* Legend */}
         <div className="mb-6 flex gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <div className="h-2 w-2 rounded-full bg-status-ok" />
