@@ -8,18 +8,30 @@ import users from "../data/users.json";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
-    const usuarioCadastrado = users.filter((usuario) => {
-      return usuario.email === email && usuario.password === password;
-    });
     e.preventDefault();
-    // Simple client-side login for now
-    if (usuarioCadastrado.length > 0) {
-      sessionStorage.setItem("authenticated", "true");
-      navigate("/dashboard");
+
+    setError("");
+
+    if (!email || !password) {
+      setError("Preencha todos os campos");
+      return;
     }
+
+    const usuario = users.find(
+      (u) => u.email === email && u.password === password
+    );
+
+    if (!usuario) {
+      setError("Email ou senha inválidos");
+      return;
+    }
+
+    sessionStorage.setItem("authenticated", "true");
+    navigate("/dashboard");
   };
 
   return (
@@ -52,6 +64,12 @@ const Login = () => {
             className="bg-background border-border text-foreground placeholder:text-muted-foreground"
             required
           />
+
+          {/* Mensagem de erro */}
+          {error && (
+            <p className="text-sm text-red-500 text-center">{error}</p>
+          )}
+
           <Button type="submit" className="w-full">
             Entrar
           </Button>
