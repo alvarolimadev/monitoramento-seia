@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Monitor, RefreshCw } from "lucide-react";
+import { LogOut, Monitor, RefreshCw, Upload, Paperclip, X, HardDriveUploadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MemoryCard from "@/components/MemoryCard";
-import { getMonitoramentoJboss, getMonitoramentoBanco } from "@/services/dashboard.service";
+import { getMonitoramentoJboss, getMonitoramentoBanco, postArquivo } from "@/services/dashboard.service";
 
 interface EnvData {
   environment: string;
@@ -25,6 +25,52 @@ const Dashboard = () => {
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [loadingEnv, setLoadingEnv] = useState(true);
   const [loadingDb, setLoadingDb] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+
+    if (!selectedFile) return;
+
+    if (!selectedFile.name.endsWith(".zip")) {
+      alert("Apenas arquivos .zip são permitidos");
+      return;
+    }
+
+    setFile(selectedFile);
+  };
+
+  const handleUpload = async () => {
+    if (!file) return;
+
+    try {
+      setUploading(true);
+
+      const response = await postArquivo(file);
+
+      if(response?.sucesso === false) {
+        alert(`Erro no arquivo: ${response.arquivo_com_erro}\nDetalhes: ${response.erro_sql}`);
+      } else {
+        alert("Arquivo enviado e scripts executados com sucesso!");
+
+        // limpar após sucesso
+        setFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      }
+    } catch (error) {
+      console.error("Erro no upload:", error);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     const auth = sessionStorage.getItem("authenticated");
@@ -153,6 +199,13 @@ const Dashboard = () => {
     setLastUpdate(new Date());
   };
 
+  const handleRemoveFile = () => {
+    setFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="w-full bg-background">
@@ -189,10 +242,56 @@ const Dashboard = () => {
               Última atualização: {lastUpdate.toLocaleTimeString("pt-BR")}
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={handleRefresh}>
-            <RefreshCw className="mr-2 h-3.5 w-3.5" />
-            Atualizar
-          </Button>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              accept=".zip"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+            />
+
+            {/* Exibição do arquivo */}
+            {file && (
+              <div className="flex items-center gap-2 px-3 rounded-full bg-file rounded-xl text-xs max-w-[220px]">
+                <Paperclip  className="h-3.5 w-3.5" />
+                <span className="truncate" title={file.name}>
+                  {file.name}
+                </span>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRemoveFile}
+                  className="ml-1 text-muted-foreground hover:text-red-500 hover:bg-transparent"
+                  title="Excluir"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleUpload}
+                  disabled={!file || uploading}
+                  className="hover:text-green-800 hover:bg-transparent"
+                  title="Enviar"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
+
+            <Button variant="outline" size="sm" onClick={handleFileClick} title="Carregar versão do pacote">
+              <HardDriveUploadIcon className="mr-2 h-3.5 w-3.5" />
+              Carregar
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleRefresh} title="Atualizar monitoramento do JBoss">
+              <RefreshCw className="mr-2 h-3.5 w-3.5" />
+              Atualizar
+            </Button>
+          </div>
         </div>
 
         {/* Legend */}
