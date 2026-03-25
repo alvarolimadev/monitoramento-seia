@@ -23,11 +23,7 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
-        teste: {
-          DEFAULT: "hsl(var(--teste))",
-          foreground: "hsl(var(--teste-foreground))",
-          soft: "hsl(var(--teste-soft))",
-        },
+        file: "hsl(var(--background-file))",
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
