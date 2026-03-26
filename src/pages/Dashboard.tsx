@@ -190,12 +190,13 @@ const Dashboard = () => {
     fetchMonitoramentoBanco();
   }, []);
 
-  const handleRefresh = (params) => {
+  const handleRefresh = () => {
     // setData(initialData.map((env) => ({
       //   ...env,
       //   usedMB: Math.round(Math.random() * env.totalMB * 0.5 + env.totalMB * 0.2),
       // })));
     fetchMonitoramento();
+    fetchMonitoramentoBanco();
     setLastUpdate(new Date());
   };
 
@@ -287,7 +288,7 @@ const Dashboard = () => {
               <HardDriveUploadIcon className="mr-2 h-3.5 w-3.5" />
               Carregar
             </Button>
-            <Button variant="outline" size="sm" onClick={handleRefresh} title="Atualizar monitoramento do JBoss">
+            <Button variant="outline" size="sm" onClick={handleRefresh} title="Atualizar dados do monitoramento">
               <RefreshCw className="mr-2 h-3.5 w-3.5" />
               Atualizar
             </Button>
