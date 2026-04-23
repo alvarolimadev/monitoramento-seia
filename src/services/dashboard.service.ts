@@ -10,7 +10,7 @@ export const getMonitoramentoBanco = async () => {
   return data;
 };
 
-export const postArquivo = async (file: File) => {
+export const postScriptsZip = async (file: File) => {
   const formData = new FormData();
   formData.append("file", file);
   const response = await api.post("/pacotes/executar-scripts-zip", formData, {

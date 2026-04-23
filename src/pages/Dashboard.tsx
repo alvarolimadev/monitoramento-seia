@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { LogOut, Monitor, RefreshCw, Upload, Paperclip, X, HardDriveUploadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MemoryCard from "@/components/MemoryCard";
-import { getMonitoramentoJboss, getMonitoramentoBanco, postArquivo } from "@/services/dashboard.service";
+import { getMonitoramentoJboss, getMonitoramentoBanco, postScriptsZip } from "@/services/dashboard.service";
 
 interface EnvData {
   environment: string;
@@ -52,7 +52,7 @@ const Dashboard = () => {
     try {
       setUploading(true);
 
-      const response = await postArquivo(file);
+      const response = await postScriptsZip(file);
 
       if(response?.sucesso === false) {
         alert(`Erro no arquivo: ${response.arquivo_com_erro}\nDetalhes: ${response.erro_sql}`);
