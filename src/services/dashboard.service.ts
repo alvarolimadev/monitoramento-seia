@@ -20,3 +20,14 @@ export const postScriptsZip = async (file: File) => {
   });
   return response.data;
 };
+
+export const postImagemWar = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await api.post("/pacotes/validar-imagem", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+}
