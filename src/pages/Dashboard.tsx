@@ -1,9 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Monitor, RefreshCw, Upload, Paperclip, X, HardDriveUploadIcon } from "lucide-react";
+import { LogOut, Monitor, RefreshCw, PackageCheck, ImageUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MemoryCard from "@/components/MemoryCard";
-import { getMonitoramentoJboss, getMonitoramentoBanco, postScriptsZip } from "@/services/dashboard.service";
+import {
+  getMonitoramentoJboss,
+  getMonitoramentoBanco,
+  postScriptsZip,
+  postImagemWar
+} from "@/services/dashboard.service";
+import { Modal } from "@/components/Modal";
 
 interface EnvData {
   environment: string;
@@ -22,55 +28,19 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<EnvData[]>([]);
   const [dbDump, setDbDump] = useState<DatabaseDump[]>([]);
+
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [loadingEnv, setLoadingEnv] = useState(true);
   const [loadingDb, setLoadingDb] = useState(true);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<File | null>(null);
+
   const [uploading, setUploading] = useState(false);
 
-  const handleFileClick = () => {
-    fileInputRef.current?.click();
-  };
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [uploadType, setUploadType] = useState<"zip" | "war" | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-
-    if (!selectedFile) return;
-
-    if (!selectedFile.name.endsWith(".zip")) {
-      alert("Apenas arquivos .zip são permitidos");
-      return;
-    }
-
-    setFile(selectedFile);
-  };
-
-  const handleUpload = async () => {
-    if (!file) return;
-
-    try {
-      setUploading(true);
-
-      const response = await postScriptsZip(file);
-
-      if(response?.sucesso === false) {
-        alert(`Erro no arquivo: ${response.arquivo_com_erro}\nDetalhes: ${response.erro_sql}`);
-      } else {
-        alert("Arquivo enviado e scripts executados com sucesso!");
-
-        // limpar após sucesso
-        setFile(null);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-      }
-    } catch (error) {
-      console.error("Erro no upload:", error);
-    } finally {
-      setUploading(false);
-    }
-  };
+  const [uploadMessage, setUploadMessage] = useState("");
+  const [uploadMessageType, setUploadMessageType] = useState<"success" | "error" | "info">("info");
 
   useEffect(() => {
     const auth = sessionStorage.getItem("authenticated");
@@ -131,12 +101,8 @@ const Dashboard = () => {
       let status = "Banco atualizado";
 
       if (item.dias_desatualizado >= 1) {
-        status = "Banco desatualizado";
+         status = `Banco desatualizado há ${item.dias_desatualizado} ${item.dias_desatualizado === 1 ? "dia" : "dias"}`;
       }
-
-      // if (item.dias_desatualizado > 1) {
-      //   status = `Banco desatualizado há ${item.dias_desatualizado} dias`;
-      // }
 
       return {
         environment: nomesAmbientes[item.ambiente] ?? item.ambiente,
@@ -184,6 +150,44 @@ const Dashboard = () => {
     }
   }
 
+  const handleSendFile = async () => {
+    if (!selectedFile || !uploadType) return;
+
+    try {
+      setUploading(true);
+      setUploadMessage("");
+
+      const response =
+        uploadType === "zip"
+          ? await postScriptsZip(selectedFile)
+          : await postImagemWar(selectedFile);
+
+      if (uploadType === "zip") {
+        if (response.sucesso) {
+          setUploadMessageType("success");
+          setUploadMessage("Pacote ZIP enviado com sucesso!");
+        } else {
+          setUploadMessageType("error");
+          setUploadMessage(
+            `Erro no arquivo: ${response.arquivo_com_erro ?? "não informado"}`
+          );
+        }
+      }
+
+      if (uploadType === "war") {
+        setUploadMessageType(response.valido ? "success" : "error");
+        setUploadMessage(response.motivo);
+      }
+
+    } catch (error) {
+      console.error("Erro ao enviar arquivo:", error);
+      setUploadMessageType("error");
+      setUploadMessage("Erro ao enviar arquivo. Entre em contato com o suporte.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   // carrega dados ao abrir a tela
   useEffect(() => {
     fetchMonitoramento();
@@ -191,20 +195,45 @@ const Dashboard = () => {
   }, []);
 
   const handleRefresh = () => {
-    // setData(initialData.map((env) => ({
-      //   ...env,
-      //   usedMB: Math.round(Math.random() * env.totalMB * 0.5 + env.totalMB * 0.2),
-      // })));
     fetchMonitoramento();
     fetchMonitoramentoBanco();
     setLastUpdate(new Date());
   };
 
-  const handleRemoveFile = () => {
-    setFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+  const openUploadModal = (type: "zip" | "war") => {
+    setUploadType(type);
+    setSelectedFile(null);
+    setUploadMessage("");
+    setUploadModalOpen(true);
+  };
+
+  const handleSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    setUploadMessage("");
+
+    if (uploadType === "zip" && !file.name.toLowerCase().endsWith(".zip")) {
+      setSelectedFile(null);
+      input.value = "";
+
+      setUploadMessageType("error");
+      setUploadMessage("Apenas arquivos .zip são permitidos");
+      return;
     }
+
+    if (uploadType === "war" && !file.name.toLowerCase().endsWith(".war")) {
+      setSelectedFile(null);
+      input.value = "";
+
+      setUploadMessageType("error");
+      setUploadMessage("Apenas arquivos .war são permitidos");
+      return;
+    }
+
+    setSelectedFile(file);
   };
 
   return (
@@ -245,51 +274,32 @@ const Dashboard = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <input
-              type="file"
-              accept=".zip"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-            />
-
-            {/* Exibição do arquivo */}
-            {file && (
-              <div className="flex items-center gap-2 px-3 rounded-full bg-file rounded-xl text-xs max-w-[220px]">
-                <Paperclip  className="h-3.5 w-3.5" />
-                <span className="truncate" title={file.name}>
-                  {file.name}
-                </span>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleRemoveFile}
-                  className="ml-1 text-muted-foreground hover:text-red-500 hover:bg-transparent"
-                  title="Excluir"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleUpload}
-                  disabled={!file || uploading}
-                  className="hover:text-green-800 hover:bg-transparent"
-                  title="Enviar"
-                >
-                  <Upload className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            )}
-
-            <Button variant="outline" size="sm" onClick={handleFileClick} title="Carregar versão do pacote">
-              <HardDriveUploadIcon className="mr-2 h-3.5 w-3.5" />
-              Carregar
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => openUploadModal("zip")}
+              title="Enviar pacote de scripts (.zip)"
+            >
+              <PackageCheck className="h-3.5 w-3.5" />
+              Enviar Pacote
             </Button>
-            <Button variant="outline" size="sm" onClick={handleRefresh} title="Atualizar dados do monitoramento">
-              <RefreshCw className="mr-2 h-3.5 w-3.5" />
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => openUploadModal("war")}
+              title="Validar imagem do JBoss (.war)"
+            >
+              <ImageUp className="h-3.5 w-3.5" />
+              Validar Imagem WAR
+            </Button>
+
+            <Button variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              title="Atualizar dados do monitoramento"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
               Atualizar
             </Button>
           </div>
@@ -363,6 +373,19 @@ const Dashboard = () => {
             </div>
         ))}
       </main>
+      <Modal
+        uploadModalOpen={uploadModalOpen}
+        setUploadModalOpen={setUploadModalOpen}
+        uploadType={uploadType}
+        selectedFile={selectedFile}
+        setSelectedFile={setSelectedFile}
+        handleSelectFile={handleSelectFile}
+        handleSendFile={handleSendFile}
+        uploading={uploading}
+        uploadMessage={uploadMessage}
+        uploadMessageType={uploadMessageType}
+        setUploadMessage={setUploadMessage}
+      />
     </div>
   );
 };
