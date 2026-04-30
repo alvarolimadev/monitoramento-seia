@@ -28,5 +28,11 @@
         "email": "alvaro.lima@prodeb",
         "password": "seia@123",
         "name": "Álvaro da Silva Lima"
+    },
+        {
+        "id": 6,
+        "email": "luciano.vieira@prodeb",
+        "password": "seia@123",
+        "name": "Luciano de Pinna Vieira"
     }
 ]
