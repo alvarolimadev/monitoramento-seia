@@ -59,10 +59,12 @@ export const Modal = ({
           />
 
           {selectedFile && (
-            <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-file text-xs max-w-[200px]">
-              <div className="flex items-center gap-2">
+            <div className="inline-flex max-w-[200px] items-center gap-2 rounded-xl bg-file px-3 py-2 text-xs">
+              <div className="flex min-w-0 items-center gap-2">
                 <Paperclip className="h-3.5 w-3.5" />
-                <span className="truncate">{selectedFile.name}</span>
+                <span className="truncate" title={selectedFile.name}>
+                  {selectedFile.name}
+                </span>
               </div>
 
               <button
