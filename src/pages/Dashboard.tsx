@@ -169,14 +169,18 @@ const Dashboard = () => {
         } else {
           setUploadMessageType("error");
           setUploadMessage(
-            `Erro no arquivo: ${response.arquivo_com_erro ?? "não informado"}`
+            `Erro no arquivo: ${response.arquivo_com_erro}\nMensagem de erro: ${response.erro_sql}`
           );
         }
       }
 
       if (uploadType === "war") {
         setUploadMessageType(response.valido ? "success" : "error");
-        setUploadMessage(response.motivo);
+        setUploadMessage(response.valido === false ?
+          `${response.motivo}:
+          ${response?.propriedades_invalidas?.map((prop: string) => `${prop}`).join(", ")}`
+          : `${response.motivo}`
+        );
       }
 
     } catch (error) {
