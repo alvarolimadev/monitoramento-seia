@@ -36,7 +36,7 @@ const MemoryCard = ({ environment, usedMB, totalMB, dumpInfo }: MemoryCardProps)
     return "ok"
   }
 
-    if (percentage >= 70) return "critical"
+    if (percentage >= 70 || percentage === 0) return "critical"
     if (percentage >= 59) return "warning"
     return "ok"
 
