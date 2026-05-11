@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Monitor } from "lucide-react";
 import users from "../data/users.json";
+import { postToken } from "@/services/login.service";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -11,7 +12,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setError("");
@@ -30,8 +31,16 @@ const Login = () => {
       return;
     }
 
-    sessionStorage.setItem("authenticated", "true");
-    navigate("/dashboard");
+    try {
+      const response = await postToken('admin_master', 'admin987');
+
+      sessionStorage.setItem("token", response.access_token);
+      sessionStorage.setItem("authenticated", "true");
+
+      navigate("/dashboard");
+    } catch (err) {
+      setError("Erro ao fazer login");
+    }
   };
 
   return (
