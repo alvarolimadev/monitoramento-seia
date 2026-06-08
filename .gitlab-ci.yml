@@ -1,0 +1,24 @@
+stages:
+- build
+- deploy
+
+build:
+  stage: build
+  image: docker:latest
+  script:
+  - docker build -t seia-monitoramento:latest -f Dockerfile.deploy .
+  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  - docker tag seia-monitoramento:latest harbor.prodeb.ba.gov.br/inema-seia/monitoramento-frontend:$CI_COMMIT_TAG
+  - docker tag seia-monitoramento:latest harbor.prodeb.ba.gov.br/inema-seia/monitoramento-frontend:latest
+  - docker push harbor.prodeb.ba.gov.br/inema-seia/monitoramento-frontend:$CI_COMMIT_TAG
+  - docker push harbor.prodeb.ba.gov.br/inema-seia/monitoramento-frontend:latest
+  - docker logout
+  only:
+  - /^(development-|homologa-)?\d+\.\d+\.\d+$/ # Only run for tags that match the pattern vX.X.X
+
+deploy:
+  stage: deploy
+  script:
+  - echo "Deploying to production server..."
+  only:
+  - /^(development-|homologa-)?\d+\.\d+\.\d+$/ # Only run for tags that match the pattern vX.X.X
