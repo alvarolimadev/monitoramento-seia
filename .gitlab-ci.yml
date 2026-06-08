@@ -14,11 +14,11 @@ build:
   - docker push harbor.prodeb.ba.gov.br/inema-seia/monitoramento-frontend:latest
   - docker logout
   only:
-  - /^(development-|homologa-)?\d+\.\d+\.\d+$/ # Only run for tags that match the pattern vX.X.X
+  - /^(development-|homologa-)?\d+\.\d+\.\d+$/ # Only run for tags that match the pattern development-X.X.X or homologa-X.X.X
 
 deploy:
   stage: deploy
   script:
   - echo "Deploying to production server..."
   only:
-  - /^(development-|homologa-)?\d+\.\d+\.\d+$/ # Only run for tags that match the pattern vX.X.X
+  - /^(development-|homologa-)?\d+\.\d+\.\d+$/ # Only run for tags that match the pattern development-X.X.X or homologa-X.X.X
